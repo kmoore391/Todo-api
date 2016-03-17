@@ -47,19 +47,16 @@ app.get('/todos', function(req, res) {
 
 //get /todos/:id
 app.get('/todos/:id', function(req, res) {
-	//res.json('Asking for Todo with id of ' + req.params.id);
-	//res.json(todos[req.params.id]);
 	var todoId = parseInt(req.params.id, 10);
-	var matchedTodo = _.findWhere(todos, {
-		id: todoId
+	db.todo.findById(todoId).then(function(todo) {
+		if (todo) {
+			res.json(todo.toJSON());
+		} else {
+			res.status(404).send();
+		}
+	}, function (e){
+		res.status(500).send();
 	});
-
-
-	if (matchedTodo) {
-		res.json(matchedTodo);
-	} else {
-		res.status(404).send();
-	}
 });
 
 //POST /todos
@@ -71,14 +68,6 @@ app.post('/todos', function(req, res) {
 	}, function(e) {
 		res.status(400).json(e);
 	});
-	// if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
-	// 	return res.status(404).send();
-	// }
-	// body.description = body.description.trim();
-	// body.id = todoNextId++;
-
-	// todos.push(body)
-	// res.json(todos);
 });
 
 //DELETE /todos/id
