@@ -121,6 +121,112 @@ app.put('/todos/:id', function(req, res) {
 
 });
 
+//get /users
+app.get('/users', function(req, res) {
+	var query = req.query;
+	var where = {};
+
+	if (query.hasOwnProperty('email') && query.email.length > 0) {
+		where.email = {
+			$like: '%' + query.email + '%'
+		};
+}
+	if (query.hasOwnProperty('p') && query.p.length > 0) {
+		where.password = {
+			$like: '%' + query.p + '%'
+		};
+	}
+	db.user.findAll({
+		where: where
+	}).then(function(users) {
+		res.json(users);
+	}, function(e) {
+		res.status(500).send();
+	});
+
+});
+
+//get /users/:id
+app.get('/users/:id', function(req, res) {
+	var userId = parseInt(req.params.id, 10);
+	db.user.findById(userId).then(function(user) {
+		if (user) {
+			res.json(user.toJSON());
+		} else {
+			res.status(404).send();
+		}
+	}, function(e) {
+		res.status(500).send();
+	});
+});
+
+//POST /users
+app.post('/users', function(req, res) {
+	var body = _.pick(req.body, 'email', 'password');
+
+	db.user.create(body).then(function(user) {
+		res.json(user.toJSON());
+	}, function(e) {
+		res.status(400).json(e);
+	});
+});
+
+//DELETE /todos/id
+app.delete('/users/:id', function(req, res) {
+
+	var userId = parseInt(req.params.id, 10);
+	db.user.destroy({
+		where: {
+			id: userId
+		}
+	}).then(function(rowsDeleted) {
+		if (rowsDeleted === 0) {
+			res.status(404).json({
+				error: 'No user with id'
+			});
+		} else {
+			res.status(204).send();
+		}
+
+	}, function(e) {
+		res.status(500).send();
+	});
+
+});
+
+//update /id
+app.put('/users/:id', function(req, res) {
+	var body = _.pick(req.body, 'email', 'password');
+	var attributes = {};
+	var userId = parseInt(req.params.id, 10);
+
+	if (body.hasOwnProperty('email')) {
+		attributes.email = body.email;
+	}
+
+	if (body.hasOwnProperty('password')) {
+		attributes.password = body.password;
+	}
+
+	db.user.findById(userId).then(function(user) {
+		if (user) {
+			user.update(attributes).then(function(user) {
+				res.json(user.toJSON());
+			}, function(e) {
+				res.status(400).json(e);
+			});
+		} else {
+			res.status(404).json({
+				error: 'No Todo with id'
+			});
+		}
+
+	}, function(e) {
+		res.status(500).send();
+	});
+
+});
+
 db.sequelize.sync().then(function() {
 	app.listen(PORT, function() {
 		console.log('Express listening on port ' + PORT + '!');
